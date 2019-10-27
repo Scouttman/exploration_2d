@@ -7,10 +7,12 @@
 #include <octomap/octomap.h>
 #include <tf/transform_listener.h>
 
+tf::TransformListener *tf_listener_ex; 
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 typedef octomap::point3d point3d;
 
 bool goToDest(point3d go_posi, tf::Quaternion q);
+bool goToDestEarly(point3d go_posi, tf::Quaternion q, double dis);
 
 #endif

@@ -1,0 +1,111 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <!--Python Testing-->
+  <model name="random">
+    <pose frame="">0 0 0 0 0 0</pose>
+    <link name="Wall_0">
+      <collisions name="Wall_0_Collision">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+        </geometry>
+      </collisions>
+      <visual name="Wall_0_Visual">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+          <pose frame="">0.000000 0.000000 0.5 0 0 0.000000</pose>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material&lt;/uri&gt;</uri>
+            <name>Gazebo/Wood</name>
+          </script>
+          <ambient>1 1 1 1</ambient>
+        </material>
+      </visual>
+    </link>
+    <link name="Wall_1">
+      <collisions name="Wall_1_Collision">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+        </geometry>
+      </collisions>
+      <visual name="Wall_1_Visual">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+          <pose frame="">1.000000 0.000000 0.5 0 0 0.000000</pose>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material&lt;/uri&gt;</uri>
+            <name>Gazebo/Wood</name>
+          </script>
+          <ambient>1 1 1 1</ambient>
+        </material>
+      </visual>
+    </link>
+    <link name="Wall_2">
+      <collisions name="Wall_2_Collision">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+        </geometry>
+      </collisions>
+      <visual name="Wall_2_Visual">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+          <pose frame="">2.000000 0.000000 0.5 0 0 0.000000</pose>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material&lt;/uri&gt;</uri>
+            <name>Gazebo/Wood</name>
+          </script>
+          <ambient>1 1 1 1</ambient>
+        </material>
+      </visual>
+    </link>
+    <link name="Wall_3">
+      <collisions name="Wall_3_Collision">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+        </geometry>
+      </collisions>
+      <visual name="Wall_3_Visual">
+        <geometry>
+          <box>
+            <size>4 0.15 0.5</size>
+          </box>
+          <pose frame="">0 1.925 0 0 -0 0</pose>
+          <pose frame="">3.000000 0.000000 0.5 0 0 0.000000</pose>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material&lt;/uri&gt;</uri>
+            <name>Gazebo/Wood</name>
+          </script>
+          <ambient>1 1 1 1</ambient>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

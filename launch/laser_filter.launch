@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+            <rosparam command="load" file="hokuyo_config.yaml" /> 
+            <remap from="scan_raw" to="scan" />
+    </node>
+</launch>

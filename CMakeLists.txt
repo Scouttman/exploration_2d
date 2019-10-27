@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(turtlebot_exploration_3d)
+project(exploration_2d)
 
 set(octomap_DIR "/opt/ros/indigo/share/octomap")
 set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -O3")
@@ -24,6 +24,27 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   move_base_msgs
   actionlib
+  laser_geometry
+  grid_map_core
+  grid_map_ros
+  grid_map_cv
+  grid_map_filters
+  grid_map_loader
+  grid_map_msgs
+  grid_map_octomap
+  grid_map_rviz_plugin
+  grid_map_visualization
+  sensor_msgs
+  filters
+  costmap_2d 
+  dynamic_reconfigure
+  polygon_layer
+  navfn
+  #tf2_ros/buffer.h
+  #tf2_ros/transform_listener.h
+  tf2_ros
+  #tf2_geometry_msgs/tf2_geometry_msgs.h
+  tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -116,13 +137,15 @@ include_directories(
 )
 
 ## Declare a cpp library
-add_library(navigation                      src/navigation_utils.cpp)
+add_library(navigation      src/navigation_utils.cpp)
+#add_library(polygon_bounds  src/polygon_bounds)
 
 ## Declare a cpp executable
-add_executable(turtlebot_exploration_3d     src/turtlebot_exploration_3d.cpp src/gpregressor.cpp  src/covMaterniso3.cpp)
+add_executable(exploration_2d     src/exploration_2d.cpp src/gpregressor.cpp  src/covMaterniso3.cpp)
 
 
-target_link_libraries(turtlebot_exploration_3d
+
+target_link_libraries(exploration_2d
   ${catkin_LIBRARIES}
   ${OCTOMAP_LIBRARIES}
   navigation
@@ -133,11 +156,11 @@ target_link_libraries(turtlebot_exploration_3d
 #############
 ## Install ##
 #############
-install(TARGETS turtlebot_exploration_3d navigation
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+## install(TARGETS turtlebot_exploration_3d navigation
+##   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+##   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+##   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+## )
 
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch/

@@ -1,4 +1,4 @@
 <launch>  
+<include file="$(find grid_map_demos)/launch/visualization.launch" />
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot_exploration_3d)/launch/turtlebot_explo.rviz" />
-
 </launch>
