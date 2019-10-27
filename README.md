@@ -1,6 +1,5 @@
 # Turtlebot Autonomous Exploration (3D) 
-
-Sorry I recently updated a wrong version of this. The bad repository was from Oct. 8th and now it's been fixed. Please let me know if you run into any issue with the current version.
+# Modifications by Scott
 
 ## Overview
 
@@ -16,42 +15,17 @@ If you find this package useful, please consider citing the follow paper:
 ## How do I get set up? 
 
 
-### Install Dependencies:
-```
-sudo apt-get install ros-indigo-octomap*
-```
-
-
-### Download from source:
-
-```
-my_catkin_workspace/src$ git clone 
-my_catkin_workspace/src$ cd ..
-my_catkin_workspace$ catkin_make
-```
-
-
-### Configure Network:
-Please follow the [turtlebot network configuration](http://wiki.ros.org/turtlebot/Tutorials/indigo/Network%20Configuration) to setup.
+with great difficult 
 
 
 ### Running:
 
 From Turtlebot:
 ```
-$ roslaunch turtlebot_exploration_3d minimal_explo.launch
-$ roslaunch turtlebot_exploration_3d turtlebot_gmapping.launch
-$ rosrun turtlebot_exploration_3d turtlebot_exploration_3d
+$ roslaunch exploration_2d sim.launch
+$ roslaunch exploration_2d exploration_rviz.launch
+$ rosrun exploration_2d exploration_2d
 ```
-* note: The octomap will be saved to the place where you do the "rosrun".
-
-
-From Remote Server:
-```
-$ roslaunch turtlebot_exploration_3d exploration_rviz.launch
-```
-
-
 
 ### Authors ###
 
