@@ -55,6 +55,9 @@ int main(int argc, char **argv) {
     time (&rawtime);
     timeinfo = localtime(&rawtime);
 
+    std::fstream logfile;
+    logfile.open ("log.txt",std::ios::out | std::ios::app);
+
     //strftime(buffer,80,"Octomap2D_%m%d_%R.ot",timeinfo);
     //octomap_name_2d = buffer;
 
@@ -86,8 +89,8 @@ int main(int argc, char **argv) {
     ros::Publisher publisher = nhGrid.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
     ros::Publisher pub_grid_bay = nhGrid.advertise<grid_map_msgs::GridMap>("grid_map_bay", 1, true);
     //ros::NodeHandle private_node_handle("~");
-    nhGrid.param<bool>("normalise", normalise, false);          // Normalise base on distance
-    nhGrid.param<float>("norm_fac",normalising_factor,0.5);      // Strength of normalisation
+    nhGrid.param<bool>("normalise", normalise, true);          // Normalise base on distance
+    nhGrid.param<float>("norm_fac",normalising_factor,0.7);      // Strength of normalisation
     nhGrid.param<bool>("momentum", preserve_momentum, false);   // try to keep heading
     nhGrid.param<float>("head_amp",head_amp,10);                // Strength of heading
     nhGrid.param<int>("samples_eva", num_of_samples_eva,50);    
@@ -222,6 +225,7 @@ int main(int argc, char **argv) {
             kinect_head = tf::getYaw(transform.getRotation());
             ROS_INFO("Kinect heading %f",kinect_head);
             got_tf = true;
+            logfile << ros::Time::now().toSec()<< "," << kinect_orig.x() << "," << kinect_orig.y() <<"\n";
         }
         catch (tf::TransformException ex) {
             ROS_WARN("Wait for tf: Kinect frame"); 
@@ -606,6 +610,7 @@ int main(int argc, char **argv) {
             if (map.isInside(position))
                 map.atPosition("elevation",position) = 0.1*(double)(MIs[i]-MIs[min_idx])/miRange; //+ static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
         }
+
         // Publish grid map.
         map.setTimestamp(ros_time.toNSec());
         GridMapRosConverter::toMessage(map, message);
@@ -618,9 +623,7 @@ int main(int argc, char **argv) {
         ROS_INFO("MI DIFF %f",MIs[idx_MI[0]]-minMI);
         Candidates_pub.publish(CandidatesMarker_array);
         CandidatesMarker_array.markers.clear();
-        candidates.clear(); //TODO all candidates delted??
-
-        
+        candidates.clear(); //TODO all candidates delted?? 
 
         arrived = false;
         int idx_ptr = 0;
@@ -634,6 +637,7 @@ int main(int argc, char **argv) {
         while (!arrived && ros::ok()) {
             // Setup the Goal
             next_vp = point3d(candidates[idx_MI[idx_ptr]].first.x(),candidates[idx_MI[idx_ptr]].first.y(),0); //candidates[idx_MI[idx_ptr]].first.z());
+            logfile << ros::Time::now().toSec() << "," << kinect_orig.x() << "," << kinect_orig.y() <<"\n";
             // Get latest heading
             tf_listener->lookupTransform("/map", "/base_scan", ros::Time(0), transform);
             kinect_head = tf::getYaw(transform.getRotation()); // update robot heading
@@ -686,7 +690,7 @@ int main(int argc, char **argv) {
                         got_tf = true; 
                     }
                     catch (tf::TransformException ex) {
-                        ROS_WARN("Wait for tf: Kinect frame"); 
+                        ROS_WARN("Wait for tf: base_scan"); 
                     } 
                     ros::Duration(0.05).sleep();
                     ros::Time now = ros::Time::now();
@@ -731,6 +735,7 @@ int main(int argc, char **argv) {
         // r.sleep();
     }
     nh.shutdown();
-    nhGrid.shutdown();         
+    nhGrid.shutdown();
+    logfile.close();   
     return 0;
 }
