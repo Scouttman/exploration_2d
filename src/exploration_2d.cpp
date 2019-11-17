@@ -38,6 +38,7 @@
 //#include "costmap_client.h"
 #include "occupancy_grid_a_star.cpp"
 
+//#include <omp.h>
 
 
 using namespace std;
@@ -56,7 +57,7 @@ int main(int argc, char **argv) {
     timeinfo = localtime(&rawtime);
 
     std::fstream logfile;
-    logfile.open ("log.txt",std::ios::out | std::ios::app);
+    logfile.open ("log.csv",std::ios::out | std::ios::app);
 
     //strftime(buffer,80,"Octomap2D_%m%d_%R.ot",timeinfo);
     //octomap_name_2d = buffer;
@@ -99,8 +100,13 @@ int main(int argc, char **argv) {
     nhGrid.param<bool>("simple_weight",simple_weight,true);   
     nhGrid.param<bool>("wait_for_bounds",wait_for_bounds,false); 
     nhGrid.param<float>("point_weight",point_weight,0.01);   
+    nhGrid.param<bool>("do_A",do_A,false);
+    nhGrid.param<bool>("pioneer",pioneer,false);
 
-
+    if(normalise)
+        ROS_INFO("normalising rate = %f",normalising_factor);
+    else
+        ROS_INFO("not normalising");
 
     // Create grid map.
     GridMap map({"elevation"});
@@ -116,52 +122,6 @@ int main(int argc, char **argv) {
     tf::StampedTransform transform;
     tf::Quaternion Goal_heading; // robot's heading direction
     
-    
-    /*######################### Cost Map Stuff  ##########################*/
-    
-    
-    // From move_base.cpp
-    //ros::NodeHandle private_nh("~");
-    //std::string robot_base_frame_, global_frame_;
-    //boost::thread* planner_thread_;
-    //costmap_2d::Costmap2DROS* planner_costmap_ros_, *controller_costmap_ros_;
-    //private_nh.param("my_costmap/robot_base_frame", robot_base_frame_, std::string("base_link"));
-    //private_nh.param("my_costmap/global_frame", global_frame_, std::string("map"));
-    //
-    ////set up the planner's thread
-    ////planner_thread_ = new boost::thread(boost::bind(&MoveBase::planThread, this));
-    //// TF stuff
-    //tf2_ros::Buffer tf_buffer;
-    //tf2_ros::TransformListener tfl(tf_buffer);
-    ////costMap_tf.waitForTransform("base_link", "map", ros::Time(0), ros::Duration(10.0));
-    //geometry_msgs::TransformStamped tfGeom;
-    //try {
-    //    tfGeom = tf_buffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(10.0));
-    //} catch (tf2::TransformException &e) {
-    //    // handle lookup error
-    //}
-    //
-    ////explore::Costmap2DClient costmap_new = new explore::Costmap2DClient(private_nh, nh, tf_listener);
-    ////explore::Costmap2DClient costmap_new(private_nh, nh, tf_listener);
-    ////search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),potential_scale_, gain_scale_,min_frontier_size);
-    ////create the ros wrapper for the planner's costmap... and initializer a pointer we'll use with the underlying map
-    //planner_costmap_ros_ = new costmap_2d::Costmap2DROS("my_costmap", tf_buffer);
-    //planner_costmap_ros_->pause();
-    //
-    ////initialize the global planner
-    //navfn::NavfnROS navfn;
-    //navfn.initialize("my_navfn_planner", planner_costmap_ros_);
-    ////try {
-    //    //planner_ = bgp_loader_.createInstance(global_planner);
-    //    //planner_->initialize(bgp_loader_.getName(global_planner), planner_costmap_ros_);
-    ////} catch (const pluginlib::PluginlibException& ex) {
-    ////  ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", global_planner.c_str(), ex.what());
-    ////  exit(1);
-    ////}
-    //
-    //planner_costmap_ros_->start();
-    //
-    ////simple_layer_namespace::SimpleLayer simple_costmap;
 
     visualization_msgs::MarkerArray CandidatesMarker_array;
     visualization_msgs::Marker Frontier_points_cubelist;
@@ -225,7 +185,7 @@ int main(int argc, char **argv) {
             kinect_head = tf::getYaw(transform.getRotation());
             ROS_INFO("Kinect heading %f",kinect_head);
             got_tf = true;
-            logfile << ros::Time::now().toSec()<< "," << kinect_orig.x() << "," << kinect_orig.y() <<"\n";
+            logfile << ros::Time::now().toSec()<< "," << kinect_orig.x() << "," << kinect_orig.y() << "," << countVolume(cur_tree_flat) << "," << countVolume(cur_tree_flat) << "\n";
         }
         catch (tf::TransformException ex) {
             ROS_WARN("Wait for tf: Kinect frame"); 
@@ -238,6 +198,23 @@ int main(int argc, char **argv) {
     ROS_INFO("Taking a scan");
     // Take a Scan
     ros::spinOnce();
+
+    if(pioneer){
+        ROS_INFO("Rotating...");
+        ros::Time start_turn = ros::Time::now();
+        twist_cmd.linear.x = twist_cmd.linear.y = twist_cmd.angular.z = 0;
+        // turning angle = turning speed * turning duration / 3.14 * 180
+        while (ros::Time::now() - start_turn < ros::Duration(4.0)){ // turning duration - second
+            twist_cmd.angular.z = 0.6; // turning speed 
+            // Rotate another 60 degrees
+            pub_twist.publish(twist_cmd);
+            ros::Duration((120.0/360.0)*3.14/0.6).sleep();
+            ros::spinOnce();
+        }
+        // stop
+        twist_cmd.angular.z = 0;
+        pub_twist.publish(twist_cmd);
+    }
 
     // prepare octomap msg
     octomap_msgs::binaryMapToMsg(*cur_tree_flat, msg_octomap_flat);
@@ -318,6 +295,7 @@ int main(int argc, char **argv) {
             ROS_ERROR("Very few candidates generated, finishing with exploration...");
             nh.shutdown();
             nhGrid.shutdown();
+            logfile.close(); 
             return 0;
         }
 
@@ -342,7 +320,7 @@ int main(int argc, char **argv) {
         octomap::OcTreeNode* result;
         /// ######################################################### My STUFF ###############################################################
         //navfn.setStart();
-        printf("My Stuff");
+        ROS_INFO("My Stuff");
         geometry_msgs::PoseStamped start;
         //geometry_msgs::Point start;
         start.pose.position.x = kinect_orig.x();
@@ -356,14 +334,12 @@ int main(int argc, char **argv) {
         std::vector<geometry_msgs::Point> points_path;
 
 
-        printf("headings?:");
         #pragma omp parallel for
         for(int i = 0; i < candidates.size(); i++) 
         {
             auto c = candidates[i];
             // Cast rays at candidate sensor position to see what objects hit??
             octomap::Pointcloud hits = castSensorRays(cur_tree_flat, c.first, c.second);
-            
             
             // Goal dis head
             goal_dis = hypot(c.first.x()-kinect_orig.x(),c.first.y()-kinect_orig.y());
@@ -372,26 +348,20 @@ int main(int argc, char **argv) {
             goal.header.frame_id = "map";
             goal.header.stamp = ros::Time::now();
             //navfn.makePlan(start,goal,plan);
-            
-            const auto path = path_planning::a_star(occupancy_grid_in,start.pose.position,goal.pose.position);
-            float goal_dis_new = 0;
-            if(path){
-                ROS_INFO("Path len %lu",path->size());
-                for(int t =1; t<path->size(); t++){
-                    goal_dis_new+= hypot(path->at(t-1).x-path->at(t).x,path->at(t-1).y-path->at(t).y);
+
+            if(do_A){
+                const auto path = path_planning::a_star(occupancy_grid_in,start.pose.position,goal.pose.position);
+                float goal_dis_new = 0;
+                if(path){
+                    for(int t =1; t<path->size(); t++){
+                        goal_dis_new+= hypot(path->at(t-1).x-path->at(t).x,path->at(t-1).y-path->at(t).y);
+                    }
+                    //ROS_INFO("goaldis new %f \told %f",goal_dis_new,goal_dis);
+                    goal_dis = goal_dis_new;
+                }else{
+                    ROS_INFO("A* Failed?");
                 }
-                //for(const auto &p : path)
-                //{
-                //    ROS_INFO("%f",(*p).x);
-                //}
-                //for(geometry_msgs::Point i : path){
-                //    ROS_INFO("%f,%f",i.x,i.y);
-                //} 
             }
-            
-            //goal_dis_new = navfn.getPathLen();
-            ROS_INFO("goaldis new %f \told %f",goal_dis_new,goal_dis);
-            goal_dis = goal_dis_new;
             //ROS_INFO_THROTTLE(1.0,"goaldis new %f \told %f",goal_dis_new,goal_dis);
             //int goal [2] = {(c.first.x()-costmap->origin_x)/costmap->resolution,(c.first.y()-costmap.resolution)/costmap.resolution};
             //navfn.setGoal(*goal);
@@ -415,6 +385,7 @@ int main(int argc, char **argv) {
                 MIs[i] = calc_MI(cur_tree_flat, c.first, hits, before);
             }
             // prefer movemnt in the current direction
+            MIs[i] = 0;
             if(preserve_momentum){
                 // get heading abs offset
                 head_offset = abs(goal_head-kinect_head);
@@ -637,7 +608,7 @@ int main(int argc, char **argv) {
         while (!arrived && ros::ok()) {
             // Setup the Goal
             next_vp = point3d(candidates[idx_MI[idx_ptr]].first.x(),candidates[idx_MI[idx_ptr]].first.y(),0); //candidates[idx_MI[idx_ptr]].first.z());
-            logfile << ros::Time::now().toSec() << "," << kinect_orig.x() << "," << kinect_orig.y() <<"\n";
+            logfile << ros::Time::now().toSec() << "," << kinect_orig.x() << "," << kinect_orig.y() << "," << countVolume(cur_tree_flat) << "," << countVolume(cur_tree_flat) <<"\n";
             // Get latest heading
             tf_listener->lookupTransform("/map", "/base_scan", ros::Time(0), transform);
             kinect_head = tf::getYaw(transform.getRotation()); // update robot heading
@@ -680,6 +651,27 @@ int main(int argc, char **argv) {
 
             if(arrived)
             {
+                if(pioneer){
+                    ROS_INFO("Reversing irresponsibly..."); // try to get out of corners
+                    twist_cmd.linear.x = twist_cmd.linear.y = twist_cmd.angular.z = 0;
+                    twist_cmd.linear.x = -0.5;
+                    pub_twist.publish(twist_cmd);
+                    ros::Duration(0.5*1).sleep();
+                    ROS_INFO("Rotating...");
+                    ros::Time start_turn = ros::Time::now();
+                    twist_cmd.linear.x = twist_cmd.linear.y = twist_cmd.angular.z = 0;
+                    // turning angle = turning speed * turning duration / 3.14 * 180
+                    while (ros::Time::now() - start_turn < ros::Duration(4.0)){ // turning duration - second
+                        twist_cmd.angular.z = 0.6; // turning speed 
+                        // Rotate another 60 degrees
+                        pub_twist.publish(twist_cmd);
+                        ros::Duration((120.0/360.0)*3.14/0.6).sleep();
+                        ros::spinOnce();
+                    }
+                    // stop
+                    twist_cmd.angular.z = 0;
+                    pub_twist.publish(twist_cmd);
+                }
                 // Update the initial location of the robot
                 got_tf = false;
                 while(!got_tf){
