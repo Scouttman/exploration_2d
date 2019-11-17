@@ -38,7 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
   filters
   costmap_2d 
   dynamic_reconfigure
-  polygon_layer
+  #polygon_layer
   navfn
   #tf2_ros/buffer.h
   #tf2_ros/transform_listener.h
@@ -46,6 +46,13 @@ find_package(catkin REQUIRED COMPONENTS
   #tf2_geometry_msgs/tf2_geometry_msgs.h
   tf2_geometry_msgs
 )
+
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  message(STATUS "OPENMP FOUND")
+  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})  # or if you use C: ${OpenMP_C_FLAGS}
+  set(OpenMP_LIBS gomp)
+endif()
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -121,6 +128,8 @@ catkin_package(
 #  LIBRARIES turtlebot_exploration_3d
  # CATKIN_DEPENDS geometry_msgs octomap_msgs octomap_ros octomap_server pcl_ros roscpp std_msgs actionlib move_base_msgs
 #  DEPENDS system_lib
+  DEPENDS
+    OpenMP
 )
 
 ###########
@@ -142,8 +151,6 @@ add_library(navigation      src/navigation_utils.cpp)
 
 ## Declare a cpp executable
 add_executable(exploration_2d     src/exploration_2d.cpp src/gpregressor.cpp  src/covMaterniso3.cpp)
-
-
 
 target_link_libraries(exploration_2d
   ${catkin_LIBRARIES}
