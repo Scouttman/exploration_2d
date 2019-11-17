@@ -48,6 +48,8 @@ bool continuous;
 bool simple_weight;
 bool wait_for_bounds;
 float point_weight;
+bool do_A;
+bool pioneer;
 ros::Publisher Hot_points_pub;
 visualization_msgs::Marker hot_points_cubelist;
 
@@ -130,7 +132,7 @@ double countFreeVolume(const octomap::OcTree *octree) {
     double volume = 0;
     for(octomap::OcTree::leaf_iterator n = octree->begin_leafs(octree->getTreeDepth()); n != octree->end_leafs(); ++n) {
         if(!octree->isNodeOccupied(*n))
-            volume += pow(n.getSize(), 3);
+            volume += pow(n.getSize(), 2); //3); // calc 2d area?
     }
     return volume;
 }
@@ -138,7 +140,7 @@ double countFreeVolume(const octomap::OcTree *octree) {
 double countVolume(const octomap::OcTree *octree) {
     double volume = 0;
     for(octomap::OcTree::leaf_iterator n = octree->begin_leafs(octree->getTreeDepth()); n != octree->end_leafs(); ++n) {
-        volume += 1;
+        volume += 1; //This make little sense
     }
     return volume;
 }
@@ -299,7 +301,7 @@ vector<pair<point3d, point3d>> extractCandidateViewPoints(vector<vector<point3d>
                     continue;
                 }
 
-                if(sqrt(pow(x - sensor_orig.x(),2) + pow(y - sensor_orig.y(),2)) < 0.25){
+                if(sqrt(pow(x - sensor_orig.x(),2) + pow(y - sensor_orig.y(),2)) < 0.25){ //0.5
                     candidate_valid = false;// delete candidates close to sensor_orig
                     continue;
                 }else{
@@ -387,7 +389,8 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_in){
         sensor_msgs::PointCloud2 cloud2_msg;
         //ROS_INFO("Laser scan callback");
         ros::Time now = ros::Time::now();
-        tf_listener->waitForTransform("/base_link", "/base_scan", now, ros::Duration(3.0));    
+        tf_listener->waitForTransform("/base_link", "/base_scan", now, ros::Duration(3.0));   
+        // Consider casting multiple times into the map slightly shift the robot in yaw each time? to stop aliasing problems 
         projector.transformLaserScanToPointCloud("/base_scan",*scan_in, cloud2_msg,*tf_listener);
         pcl::PCLPointCloud2 cloud2;
         pcl_conversions::toPCL(cloud2_msg, cloud2);
